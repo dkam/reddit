@@ -9,3 +9,5 @@ tmp/**/*
 *.swo
 *.swn
 *.swm
+.byebug_history
+
