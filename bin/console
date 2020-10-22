@@ -1,0 +1,4 @@
+#!/bin/bash 
+
+irb -r rubygems -I lib -I test -r reddit
+
