@@ -1,13 +1,12 @@
 require 'bundler/inline'
 require 'open-uri'
 require 'json'
-require 'byebug'
 
-gemfile do
-  source 'https://rubygems.org'
-  gem 'awesome_print'#, require: false
-  gem 'fast_blank'
-end
+# gemfile do
+#  source 'https://rubygems.org'
+#  gem 'awesome_print'
+#  gem 'byebug'
+# end
 
 # Unused ATM
 KINDS = {
@@ -17,7 +16,7 @@ KINDS = {
   t4:	'Message',
   t5:	'Subreddit',
   t6:	'Award'
-}
+}.freeze
 
 module Reddit
   class Subreddit
@@ -38,18 +37,19 @@ module Reddit
 
     def [](i)
       get_next_page while @posts[i].nil?
-      return @posts[i]
+      @posts[i]
     end
 
     def url
-      params = URI.encode_www_form({after: after, limit: limit}.reject {|k,v| v.nil? })
+      params = URI.encode_www_form({ after: after, limit: limit }.reject { |_k, v| v.nil? })
       "https://reddit.com/r/#{@subreddit}.json?#{params}"
     end
 
     private
+
     def get_next_page
       data = Reddit::Client.retrieve(url: url)
-    
+
       if data.dig('kind') == 'Listing'
         data.dig('data', 'children').each do |post|
           @posts << Post.new(post.dig('data'))
@@ -67,26 +67,24 @@ module Reddit
       @limit = 50
       @comments = []
     end
-    
+
     def to_s
       title
     end
-    
+
     def [](i)
-      while @comments[i].nil?
-        get_next_page
-      end
-      return @comments[i]
+      get_next_page while @comments[i].nil?
+      @comments[i]
     end
 
     def post_url
-      params = URI.encode_www_form({after: after, limit: limit}.reject {|k,v| v.nil? })
+      params = URI.encode_www_form({ after: after, limit: limit }.reject { |_k, v| v.nil? })
       "https://reddit.com#{@post.permalink}.json?#{params}"
     end
-    
+
     def method_missing(m, *args, &block)
       if @post.respond_to?(m)
-        @post.send(m) 
+        @post.send(m)
       else
         super
       end
@@ -116,36 +114,37 @@ module Reddit
       @comment = OpenStruct.new(raw_data)
       @limit = 50
 
-      @replies = raw_data.dig('replies','data', 'children')&.map do |c| 
-        Comment.new(c.dig('data'), parent: self)
-      end unless raw_data.dig('replies').nil? || raw_data.dig('replies').empty?
+      unless raw_data.dig('replies').nil? || raw_data.dig('replies').empty?
+        @replies = raw_data.dig('replies', 'data', 'children')&.map do |c|
+          Comment.new(c.dig('data'), parent: self)
+        end
+      end
     end
-    
+
     def to_s
       body
     end
-    
+
     def [](i)
-      while @replies[i].nil?
-        get_replies
-      end
-      return @replies[i]
+      get_replies while @replies[i].nil?
+      @replies[i]
     end
 
     def comment_url
-      params = URI.encode_www_form({after: after, limit: limit}.reject {|k,v| v.nil? })
+      params = URI.encode_www_form({ after: after, limit: limit }.reject { |_k, v| v.nil? })
       "https://reddit.com#{@comment.permalink}.json?#{params}"
     end
 
     def method_missing(m, *args, &block)
       if @comment.respond_to?(m)
-        @comment.send(m) 
+        @comment.send(m)
       else
         super
       end
     end
 
     private
+
     def get_replies
       data = Reddit::Client.retrieve(url: comment_url)
 
@@ -163,11 +162,11 @@ module Reddit
   end
 
   class Client
-    def self.retrieve(url: , agent: 'phblebas')
-      JSON.parse(URI.open(url,  "User-Agent" => agent).read)
-    rescue => e
+    def self.retrieve(url:, agent: 'phblebas')
+      JSON.parse(URI.open(url, 'User-Agent' => agent).read)
+    rescue StandardError => e
       puts "Error #{e.inspect}"
-      return {}
+      {}
     end
   end
 end
