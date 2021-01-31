@@ -13,6 +13,8 @@ irb(main):030:0> puts lego[1][0][0]
 There is no such thing as too many LEGO. You don’t have a problem
 ```
 
+If you're looking for a fully featured client, try [Redd](https://github.com/avinashbot/redd)
+
 
 # Licence
 This is free and unencumbered software released into the public domain.
