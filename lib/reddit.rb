@@ -1,7 +1,7 @@
-require 'bundler/inline'
 require 'open-uri'
 require 'json'
 
+# require 'bundler/inline'
 # gemfile do
 #  source 'https://rubygems.org'
 #  gem 'awesome_print'
