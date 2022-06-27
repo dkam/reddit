@@ -18,36 +18,48 @@ KINDS = {
   t6:	'Award'
 }.freeze
 
+LISTING = %w[hot new top controversial rising]
+PERIOD = %w[hour day week month year all]
+
 module Reddit
   class Subreddit
-    attr_reader :subreddit
-    attr_accessor :limit, :before, :after, :agent
+    attr_reader :subreddit, :listing, :period, :safe
+    attr_accessor :limit, :before, :after, :safe
 
-    def initialize(name)
-      @agent = agent
+    def initialize(name, listing: 'hot', period: 'day', safe: 'true')
+      @listing = LISTING.include?(listing) ? listing : 'hot'
+      @safe = safe
+      @period = period
       @subreddit = name
       @limit = 50
       @posts = []
     end
+    
+    def listing=()
+      @listing = LISTING.include?(listing) ? listing : 'hot'
+    end
 
     def posts
-      get_next_page if @posts.empty?
+      next_page if @posts.empty?
       @posts
     end
 
     def [](i)
-      get_next_page while @posts[i].nil?
+      next_page while @posts[i].nil?
       @posts[i]
     end
 
     def url
-      params = URI.encode_www_form({ after: after, limit: limit }.reject { |_k, v| v.nil? })
-      "https://reddit.com/r/#{@subreddit}.json?#{params}"
+      "https://reddit.com/r/#{@subreddit}/#{@listing}.json?#{params}"
     end
 
     private
 
-    def get_next_page
+    def params
+      params = URI.encode_www_form({ after: after, limit: limit, safe: safe, t: period }.reject { |_k, v| v.nil? })
+    end
+
+    def next_page
       data = Reddit::Client.retrieve(url: url)
 
       if data.dig('kind') == 'Listing'
@@ -63,6 +75,7 @@ module Reddit
   class Post
     attr_accessor :raw_data, :post, :after, :before, :limit, :comments
     def initialize(raw_data)
+      @raw_data = raw_data
       @post = OpenStruct.new(raw_data)
       @limit = 50
       @comments = []
@@ -73,7 +86,7 @@ module Reddit
     end
 
     def [](i)
-      get_next_page while @comments[i].nil?
+      next_page while @comments[i].nil?
       @comments[i]
     end
 
@@ -92,7 +105,7 @@ module Reddit
 
     private
 
-    def get_next_page
+    def next_page
       data = Reddit::Client.retrieve(url: post_url)
 
       post_data = data[0]
@@ -126,7 +139,7 @@ module Reddit
     end
 
     def [](i)
-      get_replies while @replies[i].nil?
+      replies while @replies[i].nil?
       @replies[i]
     end
 
@@ -145,7 +158,7 @@ module Reddit
 
     private
 
-    def get_replies
+    def replies
       data = Reddit::Client.retrieve(url: comment_url)
 
       post_data = data[0]
