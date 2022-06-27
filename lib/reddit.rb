@@ -34,6 +34,10 @@ module Reddit
       @limit = 50
       @posts = []
     end
+
+    def about
+      @about ||= OpenStruct.new( Reddit::Client.retrieve(url: url('about')).dig('data') )
+    end
     
     def listing=()
       @listing = LISTING.include?(listing) ? listing : 'hot'
@@ -49,8 +53,17 @@ module Reddit
       @posts[i]
     end
 
-    def url
-      "https://reddit.com/r/#{@subreddit}/#{@listing}.json?#{params}"
+    def url(path=nil)
+      path ||= @listing
+      "https://reddit.com/r/#{@subreddit}/#{path}.json?#{params}"
+    end
+
+    def method_missing(m, *args, &block)
+      if about.respond_to?(m)
+        about.send(m)
+      else
+        super
+      end
     end
 
     private

@@ -4,7 +4,17 @@ Tiny library to get Reddit posts &amp; comments
 ```ruby
 
 $ ./bin/console
-irb(main):027:0> lego = Reddit::Subreddit.new('lego')
+irb(main):024:0> lego = Reddit::Subreddit.new('lego')
+
+irb(main):025:0> puts lego.title
+LEGO - News from a Studded World
+
+irb(main):026:0> puts lego.public_description
+=> "Reports, news, pics, videos, discussions and documentation from a studded world.\n\n/r/lego is about all things LEGO®."
+
+irb(main):027:0> puts lego.over18
+false
+
 irb(main):028:0> puts lego[0] # Also - puts lego[0].title
 LEGO CON 2022 - Livestream Megathread
 
