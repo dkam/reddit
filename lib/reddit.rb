@@ -18,21 +18,21 @@ KINDS = {
   t6:	'Award'
 }.freeze
 
-LISTING = { 'hot', 'new' 'top', 'controversial', 'rising' }.freeze
-PERIOD = {'hour', 'day', 'week', 'month', 'year', 'all'}.freeze
+LISTING = %w[hot new top controversial rising]
+PERIOD = %w[hour day week month year all]
 
 module Reddit
   class Subreddit
-    attr_reader :subreddit
+    attr_reader :subreddit, :listing, :period, :safe
     attr_accessor :limit, :before, :after, :safe
 
-    def initialize(name, listing: 'hot', period: 'all', safe: 'true')
+    def initialize(name, listing: 'hot', period: 'day', safe: 'true')
       @listing = LISTING.include?(listing) ? listing : 'hot'
       @safe = safe
       @period = period
       @subreddit = name
       @limit = 50
-      @posts = [@listign][]
+      @posts = []
     end
     
     def listing=()
@@ -40,13 +40,13 @@ module Reddit
     end
 
     def posts
-      next_page if @posts[@listing].empty?
-      @posts[@listing]
+      next_page if @posts.empty?
+      @posts
     end
 
     def [](i)
-      next_page while @posts[@listing][i].nil?
-      @posts[@listing][i]
+      next_page while @posts[i].nil?
+      @posts[i]
     end
 
     def url
@@ -56,7 +56,7 @@ module Reddit
     private
 
     def params
-      params = URI.encode_www_form({ after: after, limit: limit, safe: safe }.reject { |_k, v| v.nil? })
+      params = URI.encode_www_form({ after: after, limit: limit, safe: safe, t: period }.reject { |_k, v| v.nil? })
     end
 
     def next_page
