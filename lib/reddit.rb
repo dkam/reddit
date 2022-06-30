@@ -1,12 +1,14 @@
 require 'open-uri'
 require 'json'
+require 'addressable'
 
-# require 'bundler/inline'
-# gemfile do
+#require 'bundler/inline'
+#gemfile do
 #  source 'https://rubygems.org'
-#  gem 'awesome_print'
+  #gem 'awesome_print'
 #  gem 'byebug'
-# end
+#  gem 'addressable'
+#end
 
 # Unused ATM
 KINDS = {
@@ -26,12 +28,12 @@ module Reddit
     attr_reader :subreddit, :listing, :period, :safe
     attr_accessor :limit, :before, :after, :safe
 
-    def initialize(name, listing: 'hot', period: 'day', safe: 'true')
+    def initialize(name, listing: 'hot', period: 'day', safe: 'true', limit: 100)
       @listing = LISTING.include?(listing) ? listing : 'hot'
       @safe = safe
       @period = period
       @subreddit = name
-      @limit = 50
+      @limit = limit
       @posts = []
     end
 

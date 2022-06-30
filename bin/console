@@ -1,3 +1,3 @@
 #!/bin/bash
 
-irb -r rubygems -I lib -I test -r reddit
+irb -r rubygems -I lib -I test -r reddit -r json_feed
