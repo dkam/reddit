@@ -94,6 +94,7 @@ module Reddit
       @post = OpenStruct.new(raw_data)
       @limit = 50
       @comments = []
+      @comments_available = true
     end
 
     def to_s
@@ -101,7 +102,9 @@ module Reddit
     end
 
     def [](i)
-      next_page while @comments[i].nil?
+      return nil unless @comments_available
+
+      next_page while @comments[i].nil? && @comments_available
       @comments[i]
     end
 
@@ -130,9 +133,19 @@ module Reddit
           @comments << Reddit::Comment.new(comment.dig('data'), parent: self)
         end
       end
-
+      #debugger if @comments.empty?
+      @comments_available = false if @comments.empty?
       # Set after so next access is after this page
       self.after = comment_data.dig('data', 'after')
+    end
+
+    def self.url_from_post_id(id)
+      "https://www.reddit.com/comments/#{id}/.json"
+    end
+
+    def self.from_id(id)
+      data = Reddit::Client.retrieve(url: url_from_post_id(id))
+      Reddit::Post.new(data.first.dig('data', 'children', 0, 'data'))
     end
   end
 
@@ -164,7 +177,7 @@ module Reddit
     end
 
     def method_missing(m, *args, &block)
-      if @comment.respond_to?(m)
+      if @comment&.respond_to?(m)
         @comment.send(m)
       else
         super
@@ -191,7 +204,9 @@ module Reddit
 
   class Client
     def self.retrieve(url:, agent: 'phblebas')
-      JSON.parse(URI.open(url, 'User-Agent' => agent).read)
+      puts "Fetching #{url}"
+      data = URI.open(url, 'User-Agent' => agent)
+      JSON.parse(data.read)
     rescue StandardError => e
       puts "Error #{e.inspect}"
       {}
