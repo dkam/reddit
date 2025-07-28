@@ -1,11 +1,11 @@
-require 'sinatra'
+require "sinatra"
 
-require './lib/reddit.rb'
-require './lib/json_feed.rb'
+require "./lib/reddit"
+require "./lib/json_feed"
 
-get '/r/:subreddit' do
-  content_type 'application/feed+json'
-  sr = Reddit::Subreddit.new(params['subreddit'])
+get "/r/:subreddit" do
+  content_type "application/feed+json"
+  sr = Reddit::Subreddit.new(params["subreddit"])
 
   Reddit::JsonFeed.new(sr).feed.to_json
 end

@@ -1,23 +1,23 @@
-require 'open-uri'
-require 'json'
-require 'addressable'
+require "open-uri"
+require "json"
+require "addressable"
+require "ostruct"
 
-#require 'bundler/inline'
-#gemfile do
+# require 'bundler/inline'
+# gemfile do
 #  source 'https://rubygems.org'
-  #gem 'awesome_print'
-#  gem 'byebug'
+#  gem 'awesome_print'
 #  gem 'addressable'
-#end
+# end
 
 # Unused ATM
 KINDS = {
-  t1:	'Comment',
-  t2:	'Account',
-  t3:	'Link',
-  t4:	'Message',
-  t5:	'Subreddit',
-  t6:	'Award'
+  t1:	"Comment",
+  t2:	"Account",
+  t3:	"Link",
+  t4:	"Message",
+  t5:	"Subreddit",
+  t6:	"Award"
 }.freeze
 
 LISTING = %w[hot new top controversial rising]
@@ -28,8 +28,8 @@ module Reddit
     attr_reader :subreddit, :listing, :period, :safe
     attr_accessor :limit, :before, :after, :safe
 
-    def initialize(name, listing: 'hot', period: 'day', safe: 'true', limit: 100)
-      @listing = LISTING.include?(listing) ? listing : 'hot'
+    def initialize(name, listing: "hot", period: "day", safe: "true", limit: 100)
+      @listing = LISTING.include?(listing) ? listing : "hot"
       @safe = safe
       @period = period
       @subreddit = name
@@ -38,11 +38,11 @@ module Reddit
     end
 
     def about
-      @about ||= OpenStruct.new( Reddit::Client.retrieve(url: url('about')).dig('data') )
+      @about ||= OpenStruct.new(Reddit::Client.retrieve(url: url("about")).dig("data"))
     end
-    
-    def listing=()
-      @listing = LISTING.include?(listing) ? listing : 'hot'
+
+    def listing=
+      @listing = LISTING.include?(listing) ? listing : "hot"
     end
 
     def posts
@@ -55,7 +55,7 @@ module Reddit
       @posts[i]
     end
 
-    def url(path=nil)
+    def url(path = nil)
       path ||= @listing
       "https://reddit.com/r/#{@subreddit}/#{path}.json?#{params}"
     end
@@ -71,19 +71,19 @@ module Reddit
     private
 
     def params
-      params = URI.encode_www_form({ after: after, limit: limit, safe: safe, t: period }.reject { |_k, v| v.nil? })
+      URI.encode_www_form({after: after, limit: limit, safe: safe, t: period}.reject { |_k, v| v.nil? })
     end
 
     def next_page
       data = Reddit::Client.retrieve(url: url)
 
-      if data.dig('kind') == 'Listing'
-        data.dig('data', 'children').each do |post|
-          @posts << Post.new(post.dig('data'))
+      if data.dig("kind") == "Listing"
+        data.dig("data", "children").each do |post|
+          @posts << Post.new(post.dig("data"))
         end
       end
       # Set after so next access is after this page
-      self.after = data.dig('data', 'after')
+      self.after = data.dig("data", "after")
     end
   end
 
@@ -109,7 +109,7 @@ module Reddit
     end
 
     def post_url
-      params = URI.encode_www_form({ after: after, limit: limit }.reject { |_k, v| v.nil? })
+      params = URI.encode_www_form({after: after, limit: limit}.reject { |_k, v| v.nil? })
       "https://reddit.com#{@post.permalink}.json?#{params}"
     end
 
@@ -126,17 +126,17 @@ module Reddit
     def next_page
       data = Reddit::Client.retrieve(url: post_url)
 
-      post_data = data[0]
+      data[0]
       comment_data = data[1]
-      if comment_data.dig('kind') == 'Listing'
-        comment_data.dig('data', 'children').each do |comment|
-          @comments << Reddit::Comment.new(comment.dig('data'), parent: self)
+      if comment_data&.dig("kind") == "Listing"
+        comment_data.dig("data", "children").each do |comment|
+          @comments << Reddit::Comment.new(comment.dig("data"), parent: self)
         end
       end
-      #debugger if @comments.empty?
+      # debugger if @comments.empty?
       @comments_available = false if @comments.empty?
       # Set after so next access is after this page
-      self.after = comment_data.dig('data', 'after')
+      self.after = comment_data.dig("data", "after")
     end
 
     def self.url_from_post_id(id)
@@ -145,7 +145,7 @@ module Reddit
 
     def self.from_id(id)
       data = Reddit::Client.retrieve(url: url_from_post_id(id))
-      Reddit::Post.new(data.first.dig('data', 'children', 0, 'data'))
+      Reddit::Post.new(data.first.dig("data", "children", 0, "data"))
     end
   end
 
@@ -155,9 +155,9 @@ module Reddit
       @comment = OpenStruct.new(raw_data)
       @limit = 50
 
-      unless raw_data.dig('replies').nil? || raw_data.dig('replies').empty?
-        @replies = raw_data.dig('replies', 'data', 'children')&.map do |c|
-          Comment.new(c.dig('data'), parent: self)
+      unless raw_data.dig("replies").nil? || raw_data.dig("replies").empty?
+        @replies = raw_data.dig("replies", "data", "children")&.map do |c|
+          Comment.new(c.dig("data"), parent: self)
         end
       end
     end
@@ -172,7 +172,7 @@ module Reddit
     end
 
     def comment_url
-      params = URI.encode_www_form({ after: after, limit: limit }.reject { |_k, v| v.nil? })
+      params = URI.encode_www_form({after: after, limit: limit}.reject { |_k, v| v.nil? })
       "https://reddit.com#{@comment.permalink}.json?#{params}"
     end
 
@@ -189,25 +189,25 @@ module Reddit
     def replies
       data = Reddit::Client.retrieve(url: comment_url)
 
-      post_data = data[0]
+      data[0]
       comment_data = data[1]
-      if comment_data.dig('kind') == 'Listing'
-        comment_data.dig('data', 'children').each do |comment|
-          @comments << Reddit::Comment.new(comment.dig('data'), parent: self)
+      if comment_data.dig("kind") == "Listing"
+        comment_data.dig("data", "children").each do |comment|
+          @comments << Reddit::Comment.new(comment.dig("data"), parent: self)
         end
       end
 
       # Set after so next access is after this page
-      self.after = comment_data.dig('data', 'after')
+      self.after = comment_data.dig("data", "after")
     end
   end
 
   class Client
-    def self.retrieve(url:, agent: 'phblebas')
+    def self.retrieve(url:, agent: "phblebas")
       puts "Fetching #{url}"
-      data = URI.open(url, 'User-Agent' => agent)
+      data = URI.open(url, "User-Agent" => agent)
       JSON.parse(data.read)
-    rescue StandardError => e
+    rescue => e
       puts "Error #{e.inspect}"
       {}
     end
